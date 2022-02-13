@@ -1,0 +1,157 @@
+{% extends "base.html" %}
+
+{% block map %}
+<script type = "text/JavaScript" src = "https://MomentJS.com/downloads/moment.js"></script>
+      <link
+      rel="stylesheet"
+      href="https://unpkg.com/leaflet@1.4.0/dist/leaflet.css"
+      integrity="sha512-puBpdR0798OZvTTbP4A8Ix/l+A4dHDD0DGqYW6RQ+9jxkRFclaxxQb/SJAWZfWAkuyeQUytO7+7N4QKrDh+drA=="
+      crossorigin=""
+    />
+    <script
+      src="https://unpkg.com/leaflet@1.4.0/dist/leaflet.js"
+      integrity="sha512-QVftwZFqvtRNi0ZyCtsznlKSWOStnDORoefr1enyq5mVL4tmKB3S/EnC3rRJcxCPavG10IcrVGSmPh6Qw5lwrg=="
+      crossorigin=""
+    ></script>
+    <style>
+    #issMap {
+        height: 280px;
+        width: 520px;
+    }
+    </style>
+
+{% endblock %}
+
+{% block title %} Home {% endblock%}
+
+{% block content %}
+<br />
+<div id="issMap"></div> <br />
+<p style="display: inline-block; color:purple;">10++ Minutes Before.</p>
+<p style="display: inline-block; color:palevioletred;">Choosen Time.</p>
+<p style="display: inline-block;color:red;">10++ Minutes After.</p> <br /><br />
+<br />
+
+  <form method="POST">
+    <br />
+    <h3 allign="center">Datetime for the ISS location:</h3>
+    <div class="form-group">
+        <input type="datetime-local" class="form-control" name="myDatetime" id="myDatetime"/> <br />
+    </div>
+    <button type="submit" class="btn btn-primary">Submit</button>
+</form>
+<br />
+<h3 id="title1"></h3>
+<p id="table1"></p>
+
+<h3 id="title2"></h3>
+<p id="table2"></p>
+
+{% endblock %}
+
+{% block script %}
+<script>
+    //To prevent the page reloads after clicking submit.
+    function handleForm(event) { event.preventDefault(); }
+
+    //To initialize map from Leaflets.
+    const mymap = L.map('issMap').setView([0, 0], 1);
+    const attribution =
+    '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors';
+
+    const tileUrl = 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png';
+    const tiles = L.tileLayer(tileUrl, { attribution });
+    tiles.addTo(mymap);
+
+    //Making a marker with a custom icon.
+    const issIconBef = L.icon({
+        iconUrl: 'static/issBef.png',
+        iconSize: [50, 32],
+        iconAnchor: [25, 16]
+    });
+
+    const issIconCurr = L.icon({
+        iconUrl: 'static/issCurr.png',
+        iconSize: [50, 32],
+        iconAnchor: [25, 16]
+    });
+
+    const issIconAft = L.icon({
+        iconUrl: 'static/issAft.png',
+        iconSize: [50, 32],
+        iconAnchor: [25, 16]
+    });
+    
+    //To set the datetime displayed in input box.
+    document.getElementById("myDatetime").value = moment(new Date()).format("YYYY-MM-DDTHH:mm");
+
+    //To initialize variables and arrays.
+    var cursor = '<table border=1><tr><td><b> No </b></td><td><b> &emsp;Datetime&emsp; </b></td><td><b> &emsp;ISS Link&emsp; </b></td><td><b> &emsp;Latitude&emsp; </b></td><td><b> &emsp;Longitude&emsp; </b></td><td><b> &emsp;City&emsp; </b></td></tr>';
+    var cursor2 = '<table border=1><tr><td><b> No </b></td><td><b> &emsp;Member os the ISS&emsp; </b></td></tr>';
+
+    var timeArray = {{timeArray2 | tojson }};
+    var lat = {{ lat2 | tojson }};
+    var lon = {{ lon2 | tojson }};
+    var city = {{ city2 | tojson }};
+    var issLink = {{ issLink2 | tojson }};
+    var issPeeps = {{ issPeeps2 | tojson }};
+
+
+    //To initialize myFunction()
+    myFunction();
+    
+ 
+    function myFunction() {
+
+        //To arrange variables to be displayed.
+        for(let i=0; i < 13; i++) {
+
+            k = i + 1;
+            a = timeArray[i];
+
+            //To create time variations from input.
+            lati = lat[i].toFixed(2);
+            long = lon[i].toFixed(2);
+
+            rn = moment(new Date(a));
+            b = rn.format("DD/MM/YYYY hh:mma");
+
+            cursor = cursor + '<tr><td> ' + k + ' </td><td> ' + b + ' </td><td> ' + issLink[i] + ' </td><td> ' + lati + '° </td><td> ' + long + '° </td><td> ' + city[i] + ' </td></tr>';
+
+            //To differentiate markers based on timestamps.
+            if(i < 6) {  
+                marker = L.marker([lat[i], lon[i]], { icon: issIconBef }).addTo(mymap);
+            }
+
+            else if(i == 6) {
+                marker = L.marker([lat[i], lon[i]], { icon: issIconCurr }).addTo(mymap);
+            }
+
+            else {
+                marker = L.marker([lat[i], lon[i]], { icon: issIconAft }).addTo(mymap);
+            }
+
+            if ( i == 12) {
+                document.getElementById("title1").innerHTML = 'List of locations of the ISS at a specific time:';
+                document.getElementById("table1").innerHTML = cursor + '</table>';
+            }
+        }
+
+        //To display table of people in space.
+        for(let p=0; p < issPeeps.length; p++) {
+            console.log("I did run");
+            q = p+1
+            cursor2 = cursor2 + '<tr><td> ' + q + ' </td><td> '+ issPeeps[p] + '</td></tr>';
+
+            console.log(p);
+
+            if(p == issPeeps.length - 1) {
+
+                console.log("But did I?");
+                document.getElementById("table2").innerHTML = cursor2 + '</table>';
+                document.getElementById("title2").innerHTML = 'List of people in the ISS currently:';
+            }
+        }
+    }
+</script>
+{% endblock %}
