@@ -1,0 +1,231 @@
+<html>
+   <head>
+      <title>Where is the ISS at a specific time?</title>
+      <script type = "text/JavaScript" src = "https://MomentJS.com/downloads/moment.js"></script>
+      <link
+      rel="stylesheet"
+      href="https://unpkg.com/leaflet@1.4.0/dist/leaflet.css"
+      integrity="sha512-puBpdR0798OZvTTbP4A8Ix/l+A4dHDD0DGqYW6RQ+9jxkRFclaxxQb/SJAWZfWAkuyeQUytO7+7N4QKrDh+drA=="
+      crossorigin=""
+    />
+    <script
+      src="https://unpkg.com/leaflet@1.4.0/dist/leaflet.js"
+      integrity="sha512-QVftwZFqvtRNi0ZyCtsznlKSWOStnDORoefr1enyq5mVL4tmKB3S/EnC3rRJcxCPavG10IcrVGSmPh6Qw5lwrg=="
+      crossorigin=""
+    ></script>
+    <style>
+        #issMap {
+          height: 180px;
+          width: 540px;
+        }
+      </style>
+      
+   </head>
+   <body>
+
+        <div id="issMap"></div> <br />
+        <p style="display: inline-block; color:purple;">10++ Minutes Before.</p>
+        <p style="display: inline-block; color:palevioletred;">Choosen Time.</p>
+        <p style="display: inline-block;color:red;">10++ Minutes After.</p> <br /><br />
+        <input type="datetime-local" id="myDatetime">
+        <button onclick="myFunction()">Submit</button>
+      <p id="table1"></p>
+      <script type = "text/JavaScript">
+
+        //Initialize variables.
+         var j = 0;
+         var control1 = 0;
+
+         var number = [];
+         var dateandtime = [];
+         var isslink = [];
+         var maplink = [];
+         var lon = [];
+         var lat = [];
+         var city = [];
+
+         var cursor = '<table border=1><tr><td>No</td><td>Datetime</td><td>ISS Link</td><td>Latitude</td><td>Longitude</td><td>City</td></tr>';
+
+         //Get value from current time and display in the date box.
+         document.getElementById("myDatetime").value = moment(new Date()).format("YYYY-MM-DDTHH:mm:ss");
+
+         // Making a map and tiles
+         const mymap = L.map('issMap').setView([0, 0], 1);
+         const attribution =
+            '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors';
+
+         const tileUrl = 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png';
+         const tiles = L.tileLayer(tileUrl, { attribution });
+         tiles.addTo(mymap);
+
+         //Making a marker with a custom icon
+         const issIconBef = L.icon({
+            iconUrl: 'issBef.png',
+            iconSize: [50, 32],
+            iconAnchor: [25, 16]
+         });
+
+         const issIconCurr = L.icon({
+            iconUrl: 'issCurr.png',
+            iconSize: [50, 32],
+            iconAnchor: [25, 16]
+         });
+
+         const issIconAft = L.icon({
+            iconUrl: 'issAft.png',
+            iconSize: [50, 32],
+            iconAnchor: [25, 16]
+         });
+         
+         //Main function.
+         function myFunction(){
+
+            //Get input value and subtract 60 minutes.
+            var a = moment(new Date(document.getElementById("myDatetime").value)).subtract(60, 'minute');
+            
+            //Making loop for retrieveing data 13 times for an interval of 10 minutes in 2 hour window.
+            for (let i = 0; i < 13; i++) {
+
+                m = 10 * i;
+                rn = moment(new Date(a)).add(m, 'minute');
+                b = rn.format("DD/MM/YYYY hh:mma");
+
+                //Creating timestasmp without milisecond.
+                e = rn.format("x").slice(0, 10);
+
+                //Create the url for ISS with timestamp.
+                api_url = 'https://api.wheretheiss.at/v1/satellites/25544/positions?timestamps=' + e;
+
+
+                //The data created will be saved in arrays.
+                number[i] = i+1;
+                dateandtime[i] = b;
+                isslink[i] = api_url;
+
+                //Pass the value of i as an id for process.
+                fetchURL(i);
+            }
+        }
+
+        //Asynchronous function to 'fetch' data from URL for the ISS info.
+        async function fetchURL(i) {
+
+            //The url used will be based on the link created with a specific timestamp.
+            url = isslink[i];
+
+            //To fetch the url.
+            await fetch(url)
+            .then(res => res.json())
+            .then((out) => {
+ 
+                out = out[0];
+
+                //To fetch and fixed the data in 2 decimal places.
+                lat1 = String(out.latitude);
+                lon1 = String(out.longitude);
+
+                //The data created will be saved in arrays.
+                lat[i] = lat1;
+                lon[i] = lon1;
+
+                //Create the url for location API with latitude, longitude and API key.  
+                url_new = 'https://api.opencagedata.com/geocode/v1/json?q='+lat1+"+"+lon1+'&key=557c590f9bfb4a868d8c07f37c5ac3d8';
+
+                //To save the url created in an array.
+                maplink[i] = url_new; 
+
+                //To pass the i value as an id to a function to get the city.
+                fetchCity(i);                   
+                    
+            })
+            //To catch an error.
+            .catch(err => {
+                throw err
+            });
+        }
+
+        //Asynchronous function to 'fetch' data from URL for the location info.
+        async function fetchCity(i) { 
+
+            //The url used will be based on the link created.
+            cityUrl = maplink[i];
+
+            //To fetch the url.
+            await fetch(cityUrl)
+            .then(res => res.json())
+            .then((out) => {
+
+                //To fetch the data.
+                city1 = out.results[0].formatted;
+
+                //To save data in an array.
+                console.log("This is i from city: " + i);
+                console.log("This is city: " + city1);
+                city[i] = city1;
+                
+                //To initiate function to create table.
+                getTable();                    
+            })
+
+            //To catch an error.
+            .catch(err => {
+                throw err
+            });
+        }
+
+        //Function to act as a relay from fetch functions and to pass the counter value to createTable.
+        function getTable() {
+
+            //To call the create table function with counter.
+            createTable(control1);
+            control1++;
+
+        }
+
+        //Function to create a table.
+        function createTable(i) {
+
+            j = j + i;
+
+            //To make sure that all of the arrays has been filled based on amount of expected entries.
+            if( j == 78) {
+
+                //To create the table.
+                for(let control1 = 0; control1 < 14 ; control1++) {
+
+                    lat2 = lat[control1]
+                    lat2 = (parseInt(lat2)).toFixed(2);
+                    lon2 = lon[control1]
+                    lon2 = (parseInt(lon2)).toFixed(2);
+                    console.log(lat2 + " " + lon2);    
+                
+                    cursor = cursor + '<tr><td>' + number[control1] + '</td><td>' + dateandtime[control1] + '</td><td>' + isslink[control1] + '</td><td>' + lat2 + '° </td><td>' + lon2 + '° </td><td>' + city[control1] + '</td></tr>';
+                    if(control1 < 6) {  
+                        marker = L.marker([lat[control1], lon[control1]], { icon: issIconBef }).addTo(mymap);
+                    }
+
+                    else if(control1 == 6) {
+                        marker = L.marker([lat[control1], lon[control1]], { icon: issIconCurr }).addTo(mymap);
+                    }
+
+                    else {
+                        marker = L.marker([lat[control1], lon[control1]], { icon: issIconAft }).addTo(mymap);
+                    }
+                    
+
+                    //Once all of the data has been filled in table, the table then will be displayed.
+                    if ( control1 == 12) {
+                        document.getElementById("table1").innerHTML = cursor + '</table>';
+                        reload = 1;
+                    }
+                }
+            }
+        }
+
+         
+
+        
+
+      </script>
+   </body>
+</html>
