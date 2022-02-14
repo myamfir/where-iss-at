@@ -117,7 +117,7 @@ _Below are steps that need to be followed:_
 <!-- THANK YOU NOTES! -->
 ## Acknowledgments
 
-Use this space to list resources you find helpful and would like to give credit to. I've included a few of my favorites to kick things off!
+I would like to thank the following for the inspirations on making this project comes true!
 
 * [CodeX](https://www.youtube.com/channel/UCiU6azFtVMhBvNkz8_E4x_Q)
 * [The Coding Train](https://www.youtube.com/c/TheCodingTrain)
