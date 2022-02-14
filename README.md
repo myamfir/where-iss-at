@@ -41,7 +41,7 @@ Here's why:
 * You shouldn't be doing the same tasks over and over like researching for the ISS details one by one.
 * You should work smart! :smile:
 
-Of course, this project is not perfectly well-made, but gets the jobs done! :wink:
+Of course, this project is not perfectly well-made, but it gets the jobs done! :wink:
 
 <p align="right">(<a href="#top">back to top</a>)</p>
 
